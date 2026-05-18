@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #f3f6fa;
+  color: #0f172a;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible;
+  }
+
+  .print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .print-slip {
+    width: 190mm;
+    min-height: 0;
+    margin: 0 auto;
+    padding: 10mm;
+    box-sizing: border-box;
+    color: #000;
+    background: #fff;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-hospital {
+    margin: 0;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .print-subtitle {
+    margin: 2mm 0 3mm;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .print-divider {
+    border-top: 1px solid #111;
+    margin: 3mm 0;
+  }
+
+  .print-patient-id {
+    margin: 2mm 0 4mm;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .print-grid p {
+    margin: 2mm 0;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .print-grid span {
+    font-weight: 700;
+  }
+
+  .print-footer {
+    margin: 4mm 0 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
