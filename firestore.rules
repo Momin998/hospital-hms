@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function role() {
+      return userDoc().data.role;
+    }
+
+    function linkedDoctorId() {
+      return userDoc().data.doctorId;
+    }
+
+    function isDoctor() {
+      return isSignedIn() && role() == 'doctor';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && role() == 'admin';
+    }
+
+    function isReceptionist() {
+      return isSignedIn() && role() == 'receptionist';
+    }
+
+    function isStaff() {
+      return isDoctor() || isReceptionist() || isAdmin();
+    }
+
+    function isAssignedDoctor(patientId) {
+      return isDoctor() &&
+        get(/databases/$(database)/documents/patients/$(patientId)).data.assignedDoctorId == linkedDoctorId();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow delete: if false;
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read: if isStaff();
+      allow write: if isReceptionist();
+    }
+
+    match /patients/{patientId} {
+      allow read: if isAdmin() || isReceptionist() || isAssignedDoctor(patientId);
+      allow create: if isReceptionist() || isAdmin();
+      allow update: if isAdmin() || isReceptionist() || isAssignedDoctor(patientId);
+      allow delete: if false;
+
+      match /visits/{visitId} {
+        allow read: if isAdmin() || isReceptionist() || isAssignedDoctor(patientId);
+        allow create, update, delete: if isAdmin() || isAssignedDoctor(patientId);
+      }
+    }
+
+    match /audit_logs/{logId} {
+      allow create: if isStaff();
+      allow read: if isDoctor() || isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}
