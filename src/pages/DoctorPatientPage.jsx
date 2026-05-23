@@ -19,6 +19,9 @@ export default function DoctorPatientPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [busy, setBusy] = useState(false);
   const [doctorInfo, setDoctorInfo] = useState(null);
+  const [expandedVisits, setExpandedVisits] = useState({});
+
+  const toggleVisit = (id) => setExpandedVisits(prev => ({ ...prev, [id]: !prev[id] }));
   const { user, profile } = useAuth();
   const { register, control, handleSubmit, reset } = useForm({ defaultValues: { date: new Date().toISOString().slice(0, 10), medicines: [{ name: '', dosage: '', duration: '', instructions: '' }], labTests: [''], symptoms: [] } });
   const meds = useFieldArray({ control, name: 'medicines' });
@@ -212,15 +215,73 @@ export default function DoctorPatientPage() {
       </form>
       <div className="space-y-2 rounded bg-white p-4 shadow">
         <h3 className="font-semibold">Visit History ({visits.length})</h3>
-        {visits.map((v) => (
-          <div key={v.id} className="rounded border p-3">
-            <p className="font-semibold">{v.date} - {v.diagnosis || 'No diagnosis'}</p>
-            <p>{v.chiefComplaint}</p>
-            <button onClick={() => startEditVisit(v)} className="mr-2 rounded border px-3 py-1">Edit</button>
-            <button onClick={() => setDeleteTarget(v)} className="mr-2 rounded border px-3 py-1 text-red-700">Delete</button>
-            <button onClick={() => printPrescription(v)} className="rounded border px-3 py-1">Print Prescription</button>
-          </div>
-        ))}
+        {visits.map((v) => {
+          const isExpanded = expandedVisits[v.id];
+          return (
+            <div key={v.id} className="rounded border p-3">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="font-semibold">{v.date} - {v.diagnosis || 'No diagnosis'}</p>
+                  <p className="text-sm text-gray-700">{v.chiefComplaint || 'No chief complaint recorded'}</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button type="button" onClick={() => toggleVisit(v.id)} className="rounded border px-3 py-1 bg-gray-50 hover:bg-gray-100">{isExpanded ? 'Hide' : 'View'}</button>
+                <button type="button" onClick={() => startEditVisit(v)} className="rounded border px-3 py-1 bg-gray-50 hover:bg-gray-100">Edit</button>
+                <button type="button" onClick={() => printPrescription(v)} className="rounded border px-3 py-1 bg-gray-50 hover:bg-gray-100">Print Prescription</button>
+                <button type="button" onClick={() => setDeleteTarget(v)} className="rounded border px-3 py-1 text-red-700 bg-red-50 hover:bg-red-100">Delete</button>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-4 pt-4 border-t border-gray-200 text-sm space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><b>Chief Complaint:</b> {v.chiefComplaint || '-'}</div>
+                    <div><b>Diagnosis:</b> {v.diagnosis || '-'}</div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-2 border border-gray-200 rounded">
+                    <b className="block mb-1">Vitals:</b>
+                    <span className="mr-4">BP: {v.bp || '-'}</span>
+                    <span className="mr-4">Temp: {v.temperature || '-'}</span>
+                    <span className="mr-4">Weight: {v.weight || '-'}</span>
+                    <span>Pulse: {v.pulse || '-'}</span>
+                  </div>
+
+                  {v.medicines && v.medicines.length > 0 && (
+                    <div>
+                      <b className="block mb-1">Medicines:</b>
+                      <table className="w-full text-left border-collapse border border-gray-300">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="border border-gray-300 px-2 py-1">Name</th>
+                            <th className="border border-gray-300 px-2 py-1">Dose</th>
+                            <th className="border border-gray-300 px-2 py-1">Days</th>
+                            <th className="border border-gray-300 px-2 py-1">Instructions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {v.medicines.map((m, i) => (
+                            <tr key={i}>
+                              <td className="border border-gray-300 px-2 py-1">{m.name || '-'}</td>
+                              <td className="border border-gray-300 px-2 py-1">{m.dosage || '-'}</td>
+                              <td className="border border-gray-300 px-2 py-1">{m.duration || '-'}</td>
+                              <td className="border border-gray-300 px-2 py-1">{m.instructions || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div><b>Lab Tests:</b> {(v.labTests || []).join(', ') || '-'}</div>
+                  <div><b>Doctor Notes:</b> {v.notes || '-'}</div>
+                  <div><b>Follow-up Date:</b> {v.followUpDate || '-'}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <ConfirmDialog
         open={confirmSaveOpen}
